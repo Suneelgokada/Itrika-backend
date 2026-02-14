@@ -3,13 +3,19 @@ const mongoose = require("mongoose");
 const jobSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
 
-  // Frontend 'Eligibility' filter kosam
+ 
   category: { 
     type: String, 
     enum: ['OPT', 'STEM OPT', 'Non-OPT'], 
     required: true 
   },
-  // Frontend 'Workspace' filter kosam
+  normalizedTitle: {
+  type: String,
+  required: true,
+  index: true,
+},
+
+
   workspace: { 
     type: String, 
     enum: ['Chicago', 'Remote', 'Hybrid', 'On-site',], 
