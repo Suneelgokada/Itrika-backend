@@ -1,8 +1,7 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 
-// 1. Helper function to generate Token response
-// Deenivalla login mariyu register lo code repeat avvadhu
+
 const sendTokenResponse = (user, statusCode, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE || '1d'
@@ -20,9 +19,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     });
 };
 
-// @desc    Register new user
-// @route   POST /api/auth/register
-// @access  Public (Optional: Admin only can create via dashboard)
+
 exports.register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
@@ -47,19 +44,16 @@ exports.register = async (req, res) => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
+
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // 1. Check for email & password
+    
         if (!email || !password) {
             return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
 
-        // 2. Find user & select password field
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -82,9 +76,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// @desc    Get current user profile
-// @route   GET /api/auth/me
-// @access  Private
+
 exports.getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -97,8 +89,6 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// @desc    Logout user (Client-side token removal suggest chesthunnam)
-// @route   GET /api/auth/logout
 exports.logout = async (req, res) => {
     res.status(200).json({
         success: true,
