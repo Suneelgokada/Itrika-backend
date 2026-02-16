@@ -385,6 +385,439 @@
 // };
 
 
+// const Job = require("../models/Job");
+
+// const normalizeTitle = (title) => {
+//   if (!title) return "";
+
+//   return title
+//     .toLowerCase()
+//     .replace(/[()]/g, "")   
+//     .replace(/\s+/g, " ")       
+//     .trim();
+// };
+
+
+// const escapeRegex = (text) => {
+//   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// };
+
+
+// const buildSafeRegex = (title) => {
+//   const normalized = normalizeTitle(title);
+//   const escaped = escapeRegex(normalized);
+//   return new RegExp(escaped, "i");
+// };
+
+
+// exports.getJobs = async (req, res) => {
+//   try {
+
+//     const {
+//       category,
+//       workspace,
+//       location,
+//       search,
+//       page = 1,
+//       limit = 10
+//     } = req.query;
+
+//     let query = {};
+
+//     if (category && category !== "All Eligibility") {
+//       query.category = category;
+//     }
+
+//     if (workspace && workspace !== "All Workspace") {
+//       query.workspace = workspace;
+//     }
+
+//     if (location && location !== "All Job Location") {
+//       query.location = { $regex: escapeRegex(location), $options: "i" };
+//     }
+
+//     if (search) {
+
+//       const normalizedSearch = normalizeTitle(search);
+
+//       query.$or = [
+//         { normalizedTitle: { $regex: normalizedSearch, $options: "i" } },
+//         { roleOverview: { $regex: escapeRegex(search), $options: "i" } }
+//       ];
+//     }
+
+
+//     const totalJobs = await Job.countDocuments(query);
+
+//     const jobs = await Job.find(query)
+//       .sort({ createdAt: -1 })
+//       .limit(Number(limit))
+//       .skip((Number(page) - 1) * Number(limit));
+
+
+//     res.status(200).json({
+//       jobs,
+//       totalPages: Math.ceil(totalJobs / limit),
+//       currentPage: Number(page),
+//       totalJobs
+//     });
+
+//   } catch (err) {
+
+//     res.status(500).json({
+//       message: "Server Error",
+//       error: err.message
+//     });
+
+//   }
+// };
+
+
+// exports.createJob = async (req, res) => {
+
+//   try {
+
+//     const {
+//       title,
+//       category,
+//       workspace,
+//       employmentType,
+//       roleOverview,
+//       keyResponsibilities,
+//       requiredQualifications
+//     } = req.body;
+
+
+//     if (
+//       !title ||
+//       !category ||
+//       !workspace ||
+//       !employmentType ||
+//       !roleOverview ||
+//       !keyResponsibilities ||
+//       !requiredQualifications
+//     ) {
+
+//       return res.status(400).json({
+//         message: "All fields are mandatory"
+//       });
+
+//     }
+
+
+//     const normalizedTitle = normalizeTitle(title);
+
+
+//     const existingJob = await Job.findOne({
+//       normalizedTitle,
+//       category,
+//       workspace
+//     });
+
+
+//     if (existingJob) {
+
+//       return res.status(409).json({
+//         message: "Job Already Exists"
+//       });
+
+//     }
+
+
+//     const newJob = new Job({
+
+//       title: title.trim(),
+
+//       normalizedTitle,
+
+//       category,
+
+//       workspace,
+
+//       employmentType,
+
+//       roleOverview: roleOverview.trim(),
+
+//       keyResponsibilities,
+
+//       requiredQualifications
+
+//     });
+
+
+//     const savedJob = await newJob.save();
+
+
+//     res.status(201).json({
+
+//       message: "Job Posted Successfully",
+
+//       job: savedJob
+
+//     });
+
+
+//   } catch (err) {
+
+//     res.status(500).json({
+
+//       message: "Create Job Failed",
+
+//       error: err.message
+
+//     });
+
+//   }
+
+// };
+
+
+// exports.getJobByTitle = async (req, res) => {
+
+//   try {
+
+//     const title = req.params.title;
+
+//     const regex = buildSafeRegex(title);
+
+
+//     const job = await Job.findOne({
+
+//       normalizedTitle: { $regex: regex },
+
+//       isActive: true
+
+//     });
+
+
+//     if (!job) {
+
+//       return res.status(404).json({
+
+//         message: "Job Not Found"
+
+//       });
+
+//     }
+
+
+//     res.status(200).json(job);
+
+
+//   } catch (err) {
+
+//     res.status(500).json({
+
+//       message: "Server Error",
+
+//       error: err.message
+
+//     });
+
+//   }
+
+// };
+
+
+// exports.updateJobByTitle = async (req, res) => {
+
+//   try {
+
+//     const title = req.params.title;
+
+//     const regex = buildSafeRegex(title);
+
+
+//     if (req.body.title) {
+
+//       req.body.normalizedTitle = normalizeTitle(req.body.title);
+
+//     }
+
+
+//     const updatedJob = await Job.findOneAndUpdate(
+
+//       {
+
+//         normalizedTitle: { $regex: regex }
+
+//       },
+
+//       {
+
+//         $set: req.body
+
+//       },
+
+//       {
+
+//         new: true,
+
+//         runValidators: true
+
+//       }
+
+//     );
+
+
+//     if (!updatedJob) {
+
+//       return res.status(404).json({
+
+//         message: "Job not found"
+
+//       });
+
+//     }
+
+
+//     res.status(200).json({
+
+//       message: "Job updated successfully",
+
+//       job: updatedJob
+
+//     });
+
+
+//   } catch (err) {
+
+//     res.status(500).json({
+
+//       message: "Update failed",
+
+//       error: err.message
+
+//     });
+
+//   }
+
+// };
+
+
+// exports.deleteJobByTitle = async (req, res) => {
+
+//   try {
+
+//     const title = req.params.title;
+
+//     const regex = buildSafeRegex(title);
+
+
+//     const deletedJob = await Job.findOneAndDelete({
+
+//       normalizedTitle: { $regex: regex }
+
+//     });
+
+
+//     if (!deletedJob) {
+
+//       return res.status(404).json({
+
+//         message: "Job not found"
+
+//       });
+
+//     }
+
+
+//     res.status(200).json({
+
+//       message: "Job deleted successfully"
+
+//     });
+
+
+//   } catch (err) {
+
+//     res.status(500).json({
+
+//       message: "Delete failed",
+
+//       error: err.message
+
+//     });
+
+//   }
+
+// };
+
+
+// exports.bulkUploadJobs = async (req, res) => {
+
+//   try {
+
+//     const jobsData = req.body;
+
+//     if (!Array.isArray(jobsData) || jobsData.length === 0) {
+
+//       return res.status(400).json({
+
+//         message: "Please provide jobs array"
+
+//       });
+
+//     }
+
+
+//     const processedJobs = jobsData.map(job => ({
+
+//       ...job,
+
+//       normalizedTitle: normalizeTitle(job.title)
+
+//     }));
+
+
+//     const savedJobs = await Job.insertMany(processedJobs, {
+
+//       ordered: false
+
+//     });
+
+
+//     res.status(201).json({
+
+//       message: `${savedJobs.length} jobs uploaded successfully`,
+
+//       count: savedJobs.length
+
+//     });
+
+
+//   } catch (err) {
+
+//     res.status(207).json({
+
+//       message: "Bulk upload partially failed",
+
+//       error: err.message
+
+//     });
+
+//   }
+
+// };
+
+
+
+// exports.getJobFormOptions = (req, res) => {
+
+//   res.status(200).json({
+
+//     categories: ['OPT', 'STEM OPT', 'Non-OPT'],
+
+//     workspaces: ['Chicago', 'Remote', 'Hybrid', 'On-site'],
+
+//     employmentTypes: ['F-1 OPT', 'F-1 STEM OPT', 'Full-time']
+
+//   });
+
+// };
+
+
+
 const Job = require("../models/Job");
 
 const normalizeTitle = (title) => {
@@ -392,31 +825,22 @@ const normalizeTitle = (title) => {
 
   return title
     .toLowerCase()
-    .replace(/[()]/g, "")   
-    .replace(/\s+/g, " ")       
+    .replace(/[()]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 };
-
 
 const escapeRegex = (text) => {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-
-const buildSafeRegex = (title) => {
-  const normalized = normalizeTitle(title);
-  const escaped = escapeRegex(normalized);
-  return new RegExp(escaped, "i");
-};
-
-
 exports.getJobs = async (req, res) => {
+
   try {
 
     const {
       category,
       workspace,
-      location,
       search,
       page = 1,
       limit = 10
@@ -430,10 +854,6 @@ exports.getJobs = async (req, res) => {
 
     if (workspace && workspace !== "All Workspace") {
       query.workspace = workspace;
-    }
-
-    if (location && location !== "All Job Location") {
-      query.location = { $regex: escapeRegex(location), $options: "i" };
     }
 
     if (search) {
@@ -470,8 +890,8 @@ exports.getJobs = async (req, res) => {
     });
 
   }
-};
 
+};
 
 exports.createJob = async (req, res) => {
 
@@ -506,8 +926,6 @@ exports.createJob = async (req, res) => {
 
 
     const normalizedTitle = normalizeTitle(title);
-
-
     const existingJob = await Job.findOne({
       normalizedTitle,
       category,
@@ -540,7 +958,9 @@ exports.createJob = async (req, res) => {
 
       keyResponsibilities,
 
-      requiredQualifications
+      requiredQualifications,
+
+      isActive: true
 
     });
 
@@ -550,7 +970,7 @@ exports.createJob = async (req, res) => {
 
     res.status(201).json({
 
-      message: "Job Posted Successfully",
+      message: "Job Created Successfully",
 
       job: savedJob
 
@@ -571,90 +991,55 @@ exports.createJob = async (req, res) => {
 
 };
 
-
-exports.getJobByTitle = async (req, res) => {
+exports.getJobById = async (req, res) => {
 
   try {
 
-    const title = req.params.title;
+    const { id } = req.params;
 
-    const regex = buildSafeRegex(title);
-
-
-    const job = await Job.findOne({
-
-      normalizedTitle: { $regex: regex },
-
-      isActive: true
-
-    });
-
+    const job = await Job.findById(id);
 
     if (!job) {
 
       return res.status(404).json({
-
         message: "Job Not Found"
-
       });
 
     }
 
-
     res.status(200).json(job);
-
 
   } catch (err) {
 
     res.status(500).json({
-
-      message: "Server Error",
-
+      message: "Fetch Failed",
       error: err.message
-
     });
 
   }
 
 };
 
-
-exports.updateJobByTitle = async (req, res) => {
+exports.updateJobById = async (req, res) => {
 
   try {
 
-    const title = req.params.title;
-
-    const regex = buildSafeRegex(title);
-
+    const { id } = req.params;
 
     if (req.body.title) {
-
       req.body.normalizedTitle = normalizeTitle(req.body.title);
-
     }
 
 
-    const updatedJob = await Job.findOneAndUpdate(
+    const updatedJob = await Job.findByIdAndUpdate(
+
+      id,
+
+      { $set: req.body },
 
       {
-
-        normalizedTitle: { $regex: regex }
-
-      },
-
-      {
-
-        $set: req.body
-
-      },
-
-      {
-
         new: true,
-
         runValidators: true
-
       }
 
     );
@@ -663,9 +1048,7 @@ exports.updateJobByTitle = async (req, res) => {
     if (!updatedJob) {
 
       return res.status(404).json({
-
-        message: "Job not found"
-
+        message: "Job Not Found"
       });
 
     }
@@ -673,7 +1056,7 @@ exports.updateJobByTitle = async (req, res) => {
 
     res.status(200).json({
 
-      message: "Job updated successfully",
+      message: "Job Updated Successfully",
 
       job: updatedJob
 
@@ -684,7 +1067,7 @@ exports.updateJobByTitle = async (req, res) => {
 
     res.status(500).json({
 
-      message: "Update failed",
+      message: "Update Failed",
 
       error: err.message
 
@@ -695,28 +1078,18 @@ exports.updateJobByTitle = async (req, res) => {
 };
 
 
-exports.deleteJobByTitle = async (req, res) => {
+exports.deleteJobById = async (req, res) => {
 
   try {
 
-    const title = req.params.title;
+    const { id } = req.params;
 
-    const regex = buildSafeRegex(title);
-
-
-    const deletedJob = await Job.findOneAndDelete({
-
-      normalizedTitle: { $regex: regex }
-
-    });
-
+    const deletedJob = await Job.findByIdAndDelete(id);
 
     if (!deletedJob) {
 
       return res.status(404).json({
-
-        message: "Job not found"
-
+        message: "Job Not Found"
       });
 
     }
@@ -724,7 +1097,7 @@ exports.deleteJobByTitle = async (req, res) => {
 
     res.status(200).json({
 
-      message: "Job deleted successfully"
+      message: "Job Deleted Successfully"
 
     });
 
@@ -733,7 +1106,7 @@ exports.deleteJobByTitle = async (req, res) => {
 
     res.status(500).json({
 
-      message: "Delete failed",
+      message: "Delete Failed",
 
       error: err.message
 
@@ -753,9 +1126,7 @@ exports.bulkUploadJobs = async (req, res) => {
     if (!Array.isArray(jobsData) || jobsData.length === 0) {
 
       return res.status(400).json({
-
         message: "Please provide jobs array"
-
       });
 
     }
@@ -765,16 +1136,14 @@ exports.bulkUploadJobs = async (req, res) => {
 
       ...job,
 
-      normalizedTitle: normalizeTitle(job.title)
+      normalizedTitle: normalizeTitle(job.title),
+
+      isActive: true
 
     }));
 
 
-    const savedJobs = await Job.insertMany(processedJobs, {
-
-      ordered: false
-
-    });
+    const savedJobs = await Job.insertMany(processedJobs);
 
 
     res.status(201).json({
@@ -785,12 +1154,11 @@ exports.bulkUploadJobs = async (req, res) => {
 
     });
 
-
   } catch (err) {
 
-    res.status(207).json({
+    res.status(500).json({
 
-      message: "Bulk upload partially failed",
+      message: "Bulk Upload Failed",
 
       error: err.message
 
@@ -799,8 +1167,6 @@ exports.bulkUploadJobs = async (req, res) => {
   }
 
 };
-
-
 
 exports.getJobFormOptions = (req, res) => {
 
